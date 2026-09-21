@@ -1,52 +1,32 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-// Importación de las pantallas
+// 1. IMPORTA TODAS TUS PANTALLAS
 import Login from '../Pantallas/Login';
-import Registro from '../Pantallas/Registro';
-import Home from '../Pantallas/Home';
 import GestionUsuario from '../Pantallas/GestionUsuario';
 import PerfilCliente from '../Pantallas/PerfilCliente';
+import Productos from '../Pantallas/Productos';
+import AdminCompras from '../Pantallas/AdminCompras'; 
 
 const Stack = createNativeStackNavigator();
 
-export default function StackNavigator() {
+export default function Navegacion() {
   return (
     <Stack.Navigator initialRouteName="Login">
-      {/* HU-03: Pantalla de Login */}
-      <Stack.Screen 
-        name="Login" 
-        component={Login} 
-        options={{ headerShown: false }} 
-      /> 
+      
+      {/* Tus pantallas existentes */}
+      <Stack.Screen name="Login" component={Login} options={{ title: 'Iniciar Sesión' }} />
+      <Stack.Screen name="GestionUsuario" component={GestionUsuario} options={{ title: 'Panel Admin' }} />
+      <Stack.Screen name="PerfilCliente" component={PerfilCliente} options={{ title: 'Clientes' }} />
+      <Stack.Screen name="Productos" component={Productos} options={{ title: 'Inventario' }} />
 
-      {/* HU-01: Pantalla de Registro */}
+      {/* REGISTRA LA NUEVA PANTALLA AQUÍ */}
       <Stack.Screen 
-        name="Registro" 
-        component={Registro} 
-        options={{ title: 'Registro' }} 
+        name="AdminCompras" 
+        component={AdminCompras} 
+        options={{ title: 'Módulo de Compras' }} 
       />
 
-      {/* Pantalla principal previa */}
-      <Stack.Screen 
-        name="Home" 
-        component={Home} 
-        options={{ title: 'Inicio' }} 
-      />
-
-      {/* HU-02: Gestión y activación de usuarios por el Administrador */}
-      <Stack.Screen 
-        name="GestionUsuarios" 
-        component={GestionUsuario} 
-        options={{ title: 'Aprobación de Cuentas' }} 
-      />
-
-      {/* HU-04: Perfil y consulta de datos del Cliente */}
-      <Stack.Screen 
-        name="PerfilCliente" 
-        component={PerfilCliente} 
-        options={{ title: 'Perfil del Cliente' }} 
-      />
     </Stack.Navigator>
   );
 }

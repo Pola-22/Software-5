@@ -15,22 +15,20 @@ interface Producto {
   id?: number;
   nombre: string;
   descripcion: string;
-  valorunitario: number;
+  valor_unitario: number;
   stock: number;
 }
 
-export default function ProductosScreen({ navigation }: any) {
+export default function ProductosScreen() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cargando, setCargando] = useState(false);
 
-  // Estados del formulario
   const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [valorUnitario, setValorUnitario] = useState('');
   const [stock, setStock] = useState('');
 
-  // 1. Cargar la lista de productos desde la tabla 'producto' en Supabase
   const cargarProductos = async () => {
     setCargando(true);
     try {
@@ -48,7 +46,6 @@ export default function ProductosScreen({ navigation }: any) {
     cargarProductos();
   }, []);
 
-  // Limpiar campos del formulario
   const limpiarFormulario = () => {
     setIdSeleccionado(null);
     setNombre('');
@@ -57,18 +54,15 @@ export default function ProductosScreen({ navigation }: any) {
     setStock('');
   };
 
-  // Seleccionar producto para editar
   const seleccionarParaEditar = (prod: any) => {
     setIdSeleccionado(prod.id || prod.Id);
     setNombre(prod.nombre || prod.Nombre || '');
     setDescripcion(prod.descripcion || prod.Descripcion || '');
-    setValorUnitario((prod.valorunitario || prod.ValorUnitario || 0).toString());
+    setValorUnitario((prod.valor_unitario || prod.valorunitario || prod.ValorUnitario || 0).toString());
     setStock((prod.stock || prod.Stock || 0).toString());
   };
 
-  // 2. Guardar o actualizar producto (HU-07)
   const guardarProducto = async () => {
-    // Validaciones
     if (!nombre.trim() || !descripcion.trim() || !valorUnitario.trim() || !stock.trim()) {
       Alert.alert('Error', 'Todos los campos son obligatorios.');
       return;
@@ -90,13 +84,13 @@ export default function ProductosScreen({ navigation }: any) {
     setCargando(true);
     try {
       if (idSeleccionado) {
-        // Editar producto existente
+        // Actualizar usando la columna correcta 'valor_unitario'
         const { error } = await supabase
           .from('producto')
           .update({
             nombre: nombre.trim(),
             descripcion: descripcion.trim(),
-            valorunitario: precioNum,
+            valor_unitario: precioNum,
             stock: stockNum
           })
           .eq('id', idSeleccionado);
@@ -104,14 +98,14 @@ export default function ProductosScreen({ navigation }: any) {
         if (error) throw error;
         Alert.alert('Éxito', 'Producto actualizado correctamente.');
       } else {
-        // Crear nuevo producto
+        // Insertar usando la columna correcta 'valor_unitario'
         const { error } = await supabase
           .from('producto')
           .insert([
             {
               nombre: nombre.trim(),
               descripcion: descripcion.trim(),
-              valorunitario: precioNum,
+              valor_unitario: precioNum,
               stock: stockNum
             }
           ]);
@@ -132,9 +126,8 @@ export default function ProductosScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Gestión de Productos</Text>
-      <Text style={styles.subtitulo}>Administración de inventario (HU-07)</Text>
+      <Text style={styles.subtitulo}>Administración de inventario</Text>
 
-      {/* Formulario de producto */}
       <View style={styles.form}>
         <TextInput
           style={styles.input}
@@ -178,7 +171,6 @@ export default function ProductosScreen({ navigation }: any) {
         )}
       </View>
 
-      {/* Listado de productos */}
       <Text style={styles.listTitulo}>Inventario Actual</Text>
       {cargando ? (
         <ActivityIndicator size="large" color="#007BFF" />
@@ -192,7 +184,7 @@ export default function ProductosScreen({ navigation }: any) {
                 <Text style={styles.prodNombre}>{item.nombre}</Text>
                 <Text style={styles.prodDesc}>{item.descripcion}</Text>
                 <Text style={styles.prodInfo}>
-                  Precio: ${item.valorunitario} | Stock: {item.stock}
+                  Precio: ${item.valor_unitario} | Stock: {item.stock}
                 </Text>
               </View>
               <TouchableOpacity

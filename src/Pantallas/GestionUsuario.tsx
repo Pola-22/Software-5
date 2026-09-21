@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { supabase } from '../config/supabase';
 
-// Interfaz TypeScript para los registros de la tabla 'login'
 interface UsuarioPendiente {
   correo: string;
   rol: string;
@@ -21,7 +20,6 @@ export default function GestionUsuario({ navigation }: any) {
   const [usuarios, setUsuarios] = useState<UsuarioPendiente[]>([]);
   const [cargando, setCargando] = useState<boolean>(true);
 
-  // 1. Cargar solicitudes pendientes desde la tabla 'login' en Supabase (HU-02)
   const cargarUsuariosPendientes = async () => {
     setCargando(true);
     try {
@@ -44,7 +42,6 @@ export default function GestionUsuario({ navigation }: any) {
     cargarUsuariosPendientes();
   }, []);
 
-  // 2. Activar cuenta y asignar el nuevo Rol ('Admin' o 'Cliente')
   const activarCuenta = async (correoUsuario: string, nuevoRol: 'Admin' | 'Cliente') => {
     try {
       const { error } = await supabase
@@ -58,15 +55,12 @@ export default function GestionUsuario({ navigation }: any) {
       if (error) throw error;
 
       Alert.alert('Éxito', `La cuenta ${correoUsuario} ha sido activada con el rol de ${nuevoRol}.`);
-      
-      // Refrescar la lista de solicitudes pendientes
       cargarUsuariosPendientes();
     } catch (error: any) {
       Alert.alert('Error', 'No se pudo actualizar el usuario: ' + error.message);
     }
   };
 
-  // Renderizado de cada tarjeta de usuario pendiente
   const renderItem = ({ item }: { item: UsuarioPendiente }) => (
     <View style={styles.card}>
       <Text style={styles.correoText}>{item.correo}</Text>
@@ -95,7 +89,7 @@ export default function GestionUsuario({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Aprobación de Cuentas</Text>
-      <Text style={styles.subtitulo}>Solicitudes pendientes de activación (HU-02)</Text>
+      <Text style={styles.subtitulo}>Solicitudes pendientes de activación</Text>
 
       {cargando ? (
         <ActivityIndicator size="large" color="#007BFF" style={{ marginTop: 20 }} />
@@ -112,7 +106,15 @@ export default function GestionUsuario({ navigation }: any) {
         />
       )}
 
-      {/* Botón para ir a la Gestión de Productos (HU-07) */}
+      {/* Botón para ver la lista de clientes registrados */}
+      <TouchableOpacity
+        style={styles.botonClientes}
+        onPress={() => navigation.navigate('PerfilCliente', { usuario: { rol: 'Admin' } })}
+      >
+        <Text style={styles.textoBoton}>Ver Listado de Clientes</Text>
+      </TouchableOpacity>
+
+      {/* Botón para ir a la Gestión de Productos */}
       <TouchableOpacity
         style={styles.botonProductos}
         onPress={() => navigation.navigate('Productos')}
@@ -120,7 +122,15 @@ export default function GestionUsuario({ navigation }: any) {
         <Text style={styles.textoBoton}>Gestionar Productos (Inventario)</Text>
       </TouchableOpacity>
 
-      {/* Botón para Cerrar Sesión y volver al Login */}
+      {/* NUEVO: Botón para ir al Módulo de Compras (Encabezados y Detalles) */}
+      <TouchableOpacity
+        style={styles.botonCompras}
+        onPress={() => navigation.navigate('AdminCompras')}
+      >
+        <Text style={styles.textoBoton}>Ver Módulo de Compras (Encabezados y Detalles)</Text>
+      </TouchableOpacity>
+
+      {/* Botón para Cerrar Sesión */}
       <TouchableOpacity
         style={styles.botonCerrarSesion}
         onPress={() => navigation.navigate('Login')}
@@ -204,8 +214,22 @@ const styles = StyleSheet.create({
     color: '#777',
     fontSize: 16,
   },
+  botonClientes: {
+    backgroundColor: '#17a2b8',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
   botonProductos: {
     backgroundColor: '#007BFF',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  botonCompras: {
+    backgroundColor: '#28a745',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',

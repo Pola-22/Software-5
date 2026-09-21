@@ -62,7 +62,7 @@ export default function Login({ navigation }: any) {
       if (usuario.rol === 'Admin') {
         Alert.alert('Bienvenido Admin', `Hola, ${usuario.correo}`);
         // Redirige al panel del Administrador (HU-02)
-        navigation.navigate('GestionUsuarios'); 
+        navigation.navigate('GestionUsuario'); 
       } else if (usuario.rol === 'Cliente') {
         // Redirige al perfil del Cliente (HU-04) enviando los datos del usuario
         navigation.navigate('PerfilCliente', { usuario });

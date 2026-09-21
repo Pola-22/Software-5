@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { supabase } from '../config/supabase'; // Importamos la conexión a la BD
+import { supabase } from '../config/supabase';
 
 export default function RegistroScreen() {
   const [correo, setCorreo] = useState('');
@@ -8,37 +8,55 @@ export default function RegistroScreen() {
   const [cargando, setCargando] = useState(false);
 
   const handleRegistro = async () => {
-    // 1. Validación solicitada en la HU-01
-    if (!correo.includes('@') || password.length < 6) {
-      Alert.alert('Error', 'Por favor ingresa un correo válido y una contraseña de al menos 6 caracteres.');
+    const correoLimpio = correo.trim().toLowerCase();
+
+    // Validar correo
+    if (!correoLimpio.includes('@')) {
+      Alert.alert('Error', 'Por favor ingresa un correo electrónico válido.');
+      return;
+    }
+
+    // Validar contraseña (entre 6 y 10 caracteres)
+    if (password.length < 6 || password.length > 10) {
+      Alert.alert('Error', 'La contraseña debe tener entre 6 y 10 caracteres.');
       return;
     }
 
     setCargando(true);
 
     try {
-      // 2. Inserción en la tabla 'login' de Supabase
+      // Validar si el usuario ya existe en la base de datos
+      const { data: usuarioExistente } = await supabase
+        .from('login')
+        .select('correo')
+        .eq('correo', correoLimpio)
+        .maybeSingle();
+
+      if (usuarioExistente) {
+        Alert.alert('Usuario ya registrado', 'Ya existe una cuenta vinculada a este correo electrónico.');
+        setCargando(false);
+        return;
+      }
+
+      // Inserción en la tabla 'login'
       const { error } = await supabase
         .from('login')
         .insert([
           { 
-            correo: correo.toLowerCase(), 
+            correo: correoLimpio, 
             password: password, 
-            rol: 'Cliente', // Asignamos el rol por defecto
-            estado: 'Pendiente/Inactivo' // Estado inicial según HU-01
+            rol: 'Cliente', 
+            estado: 'Pendiente/Inactivo' 
           }
         ]);
 
-      // Si Supabase devuelve un error (por ejemplo, correo duplicado), lo lanzamos
       if (error) throw error;
 
-      // 3. Mensaje de éxito según criterios de aceptación
       Alert.alert(
         'Registro Exitoso', 
         'Tu cuenta ha sido creada. Un administrador debe aprobarla para que puedas ingresar.'
       );
       
-      // Limpiamos el formulario
       setCorreo('');
       setPassword('');
 
@@ -64,10 +82,11 @@ export default function RegistroScreen() {
       
       <TextInput
         style={styles.input}
-        placeholder="Contraseña"
+        placeholder="Contraseña (6 a 10 caracteres)"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        maxLength={10}
       />
       
       <TouchableOpacity 

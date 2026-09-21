@@ -12,10 +12,8 @@ import {
 import { supabase } from '../config/supabase';
 
 export default function PerfilCliente({ route, navigation }: any) {
-  // Recibimos los datos del usuario que inició sesión desde Login.tsx
   const usuarioLogueado = route?.params?.usuario;
 
-  // Estados del formulario para el perfil del cliente
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [correo, setCorreo] = useState(usuarioLogueado?.correo || '');
@@ -36,7 +34,6 @@ export default function PerfilCliente({ route, navigation }: any) {
     }
   }, [usuarioLogueado]);
 
-  // 1. Cargar datos del cliente autenticado desde la tabla 'cliente' (HU-04)
   const cargarPerfilCliente = async () => {
     setCargando(true);
     try {
@@ -61,11 +58,15 @@ export default function PerfilCliente({ route, navigation }: any) {
     }
   };
 
-  // 2. Si es Admin, cargar el listado completo de clientes (Criterio HU-04)
   const cargarTodosLosClientes = async () => {
     setCargando(true);
     try {
-      const { data, error } = await supabase.from('cliente').select('*');
+      const { data, error } = await supabase
+        .from('login')
+        .select('*')
+        .eq('rol', 'Cliente')
+        .eq('estado', 'Activo'); 
+
       if (error) throw error;
       setListaClientes(data || []);
     } catch (error: any) {
@@ -75,7 +76,6 @@ export default function PerfilCliente({ route, navigation }: any) {
     }
   };
 
-  // 3. Guardar o actualizar datos en la tabla 'cliente'
   const guardarPerfil = async () => {
     if (!nombre.trim() || !apellido.trim()) {
       Alert.alert('Error de validación', 'Por favor ingresa tu nombre y apellido.');
@@ -85,7 +85,6 @@ export default function PerfilCliente({ route, navigation }: any) {
     setCargando(true);
     try {
       if (idCliente) {
-        // UPDATE si el cliente ya existía
         const { error } = await supabase
           .from('cliente')
           .update({
@@ -98,7 +97,6 @@ export default function PerfilCliente({ route, navigation }: any) {
 
         if (error) throw error;
       } else {
-        // INSERT si es el primer ingreso del cliente
         const { data, error } = await supabase
           .from('cliente')
           .insert([
@@ -124,11 +122,10 @@ export default function PerfilCliente({ route, navigation }: any) {
     }
   };
 
-  // Si el usuario es Administrador, ve la lista completa de clientes
   if (esAdmin) {
     return (
       <View style={styles.container}>
-        <Text style={styles.titulo}>Listado de Clientes (Modo Admin)</Text>
+        <Text style={styles.titulo}>Listado de Clientes</Text>
         <Text style={styles.subtitulo}>Clientes registrados en el sistema</Text>
 
         {cargando ? (
@@ -139,28 +136,30 @@ export default function PerfilCliente({ route, navigation }: any) {
             keyExtractor={(item) => (item.id || item.Id || item.correo).toString()}
             renderItem={({ item }) => (
               <View style={styles.card}>
-                <Text style={styles.cardNombre}>{item.nombre || item.Nombre} {item.apellido || item.Apellido}</Text>
+                <Text style={styles.cardNombre}>Cuenta de Cliente</Text>
                 <Text style={styles.cardCorreo}>{item.correo || item.Correo}</Text>
+                <Text style={{ color: '#28a745', fontSize: 13, marginTop: 4, fontWeight: 'bold' }}>
+                  Estado: {item.estado}
+                </Text>
               </View>
             )}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>No hay registros de clientes en este momento.</Text>
+              <Text style={styles.emptyText}>No hay registros de clientes activos en este momento.</Text>
             }
           />
         )}
 
-        <TouchableOpacity style={styles.botonVolver} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.textoBoton}>Cerrar Sesión</Text>
+        <TouchableOpacity style={styles.botonVolver} onPress={() => navigation.goBack()}>
+          <Text style={styles.textoBoton}>Volver al Panel Admin</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Vista predeterminada para el Cliente activo
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Perfil del Cliente</Text>
-      <Text style={styles.subtitulo}>Consulta y actualiza tus datos personales (HU-04)</Text>
+      <Text style={styles.subtitulo}>Consulta y actualiza tus datos personales</Text>
 
       {cargando ? (
         <ActivityIndicator size="large" color="#007BFF" style={{ marginTop: 20 }} />
@@ -199,6 +198,18 @@ export default function PerfilCliente({ route, navigation }: any) {
             </Text>
           </TouchableOpacity>
 
+          {idCliente && (
+            <TouchableOpacity
+              style={styles.botonComprar}
+              onPress={() => navigation.navigate('SeleccionProductos', { 
+                usuario: usuarioLogueado,
+                idCliente: idCliente 
+              })}
+            >
+              <Text style={styles.textoBoton}>Ir a Comprar</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={styles.botonCerrar}
             onPress={() => navigation.navigate('Login')}
@@ -212,97 +223,21 @@ export default function PerfilCliente({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-  },
-  subtitulo: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  form: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    elevation: 3,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    fontSize: 16,
-  },
-  inputDeshabilitado: {
-    backgroundColor: '#e9ecef',
-    color: '#6c757d',
-  },
-  boton: {
-    backgroundColor: '#28a745',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  botonCerrar: {
-    backgroundColor: '#dc3545',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  botonVolver: {
-    backgroundColor: '#007BFF',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  botonDeshabilitado: {
-    backgroundColor: '#94d3a2',
-  },
-  textoBoton: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 10,
-    elevation: 2,
-  },
-  cardNombre: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  cardCorreo: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 30,
-    fontSize: 15,
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
+  titulo: { fontSize: 24, fontWeight: 'bold', color: '#333', textAlign: 'center' },
+  subtitulo: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
+  form: { backgroundColor: '#fff', padding: 20, borderRadius: 10, elevation: 3 },
+  label: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 6 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 },
+  inputDeshabilitado: { backgroundColor: '#e9ecef', color: '#6c757d' },
+  boton: { backgroundColor: '#28a745', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 8 },
+  botonComprar: { backgroundColor: '#ff9900', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 10 },
+  botonCerrar: { backgroundColor: '#dc3545', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 10 },
+  botonVolver: { backgroundColor: '#007BFF', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 10 },
+  botonDeshabilitado: { backgroundColor: '#94d3a2' },
+  textoBoton: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  card: { backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 10, elevation: 2 },
+  cardNombre: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  cardCorreo: { fontSize: 14, color: '#666', marginTop: 4 },
+  emptyText: { textAlign: 'center', color: '#777', marginTop: 30, fontSize: 15 },
 });
